@@ -1,27 +1,50 @@
 #!/usr/bin/python3
-"""Export all employees TODO list data to JSON format."""
+"""
+Fetch and display an employee's TODO list progress
+from https://jsonplaceholder.typicode.com
+"""
+
 import json
 import requests
+import sys
 
 
-if __name__ == "__main__":
+def main():
     base_url = "https://jsonplaceholder.typicode.com"
 
-    users = requests.get("{}/users".format(base_url)).json()
-    todos = requests.get("{}/todos".format(base_url)).json()
+    # Fetch employee info
+    users_resp = requests.get(f"{base_url}/users")
+    if users_resp.status_code != 200:
+        sys.exit(1)
 
-    all_data = {}
+    users = users_resp.json()
+
+    # Fetch todos
+    todos_resp = requests.get(f"{base_url}/todos")
+    todos = todos_resp.json()
+
+    user_map = {}
     for user in users:
-        uid = user.get("id")
-        username = user.get("username")
-        all_data[str(uid)] = [
-            {
-                "username": username,
-                "task": t.get("title"),
-                "completed": t.get("completed")
-            }
-            for t in todos if t.get("userId") == uid
-        ]
+        user_map[user.get('id')] = user.get('username')
 
-    with open("todo_all_employees.json", mode="w") as f:
-        json.dump(all_data, f)
+    all_tasks = {}
+    for task in todos:
+        user_id = task.get('userId')
+        user_id_str = str(user_id)
+
+        if user_id_str not in all_tasks:
+            all_tasks[user_id_str] = []
+
+        all_tasks[user_id_str].append({
+            "username": user_map[user_id],
+            "task": task.get('title'),
+            "completed": task.get('completed')
+        })
+
+    filename = "todo_all_employees.json"
+
+    with open(filename, mode="w", encoding="utf-8") as jsonfile:
+        json.dump(all_tasks, jsonfile)
+
+if __name__ == "__main__":
+    main()
