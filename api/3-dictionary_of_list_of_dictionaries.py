@@ -1,37 +1,39 @@
 #!/usr/bin/python3
-"""Script that gets user data (Todo list) from API
-and then export the result to csv file. """
+"""
+Exports TODO list of all employees to JSON format.
+"""
 
 import json
 import requests
 
 
-def main():
-    """main function"""
-    todo_url = 'https://jsonplaceholder.typicode.com/todos'
+if __name__ == "__main__":
+    users_url = "https://jsonplaceholder.typicode.com/users"
+    todos_url = "https://jsonplaceholder.typicode.com/todos"
 
-    response = requests.get(todo_url)
+    users_response = requests.get(users_url)
+    todos_response = requests.get(todos_url)
 
-    output = {}
+    users = users_response.json()
+    todos = todos_response.json()
 
-    for todo in response.json():
-        user_id = todo.get('userId')
-        if user_id not in output.keys():
-            output[user_id] = []
-            user_url = 'https://jsonplaceholder.typicode.com/users/{}'.format(
-                user_id)
-            user_name = requests.get(user_url).json().get('username')
+    data = {}
 
-        output[user_id].append(
-            {
-                "username": user_name,
-                "task": todo.get('title'),
-                "completed": todo.get('completed')
-            })
+    for user in users:
+        user_id = str(user.get("id"))
+        username = user.get("username")
 
-    with open("todo_all_employees.json", 'w') as file:
-        json.dump(output, file)
+        user_tasks = []
 
+        for task in todos:
+            if task.get("userId") == user.get("id"):
+                user_tasks.append({
+                    "username": username,
+                    "task": task.get("title"),
+                    "completed": task.get("completed")
+                })
 
-if __name__ == '__main__':
-    main()
+        data[user_id] = user_tasks
+
+    with open("todo_all_employees.json", mode="w") as json_file:
+        json.dump(data, json_file)
