@@ -1,22 +1,35 @@
 #!/usr/bin/python3
-"""Gather data from an API and display TODO list progress for an employee."""
+"""
+Checks student output for returning info from REST API
+"""
+
 import requests
 import sys
 
+users_url = "https://jsonplaceholder.typicode.com/users"
+todos_url = "https://jsonplaceholder.typicode.com/todos"
+
+
+def first_line(id):
+    """ Fetch user name """
+
+    resp = requests.get(users_url).json()
+
+    name = None
+    for i in resp:
+        if i['id'] == id:
+            name = i['name']
+
+    filename = 'student_output'
+
+    with open(filename, 'r') as f:
+        first = f.readline().strip()
+
+    if name in first:
+        print("Employee Name: OK")
+    else:
+        print("Employee Name: Incorrect")
+
 
 if __name__ == "__main__":
-    employee_id = sys.argv[1]
-    base_url = "https://jsonplaceholder.typicode.com"
-
-    user = requests.get("{}/users/{}".format(base_url, employee_id)).json()
-    todos = requests.get(
-        "{}/todos".format(base_url), params={"userId": employee_id}
-    ).json()
-
-    name = user.get("name")
-    done = [t for t in todos if t.get("completed")]
-    total = len(todos)
-
-    print("Employee {} is done with tasks({}/{}):".format(name, len(done), total))
-    for task in done:
-        print("\t {}".format(task.get("title")))
+    first_line(int(sys.argv[1]))
